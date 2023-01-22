@@ -4465,6 +4465,31 @@ static const struct panel_desc arm_rtsm = {
 	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
 };
 
+static const struct drm_display_mode startek_kd030c2_mode = {
+	.clock = 11364,
+	.vdisplay = 400,
+	.vsync_start = 400 + 10,
+	.vsync_end = 400 + 10 + 20,
+	.vtotal = 400 + 10 + 20 + 10,
+	.hdisplay = 240,
+	.hsync_start = 240 + 2,
+	.hsync_end = 240 + 2 + 4,
+	.htotal = 240 + 2 + 4 + 2,
+	.flags = DRM_BUS_FLAG_DE_HIGH | DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
+};
+
+static const struct panel_desc startek_kd030c2 = {
+	.modes = &startek_kd030c2_mode,
+	.num_modes = 1,
+	.bpc = 6,
+	.size = {
+		.width = 77,
+		.height = 45,
+	},
+	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
+	.connector_type = DRM_MODE_CONNECTOR_DPI,
+};
+
 static const struct of_device_id platform_of_match[] = {
 	{
 		.compatible = "ampire,am-1280800n3tzqw-t00h",
@@ -4847,6 +4872,9 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "starry,kr122ea0sra",
 		.data = &starry_kr122ea0sra,
+	}, {
+		.compatible = "startek,kd030c-2",
+		.data = &startek_kd030c2,
 	}, {
 		.compatible = "tfc,s9700rtwv43tr-01b",
 		.data = &tfc_s9700rtwv43tr_01b,
