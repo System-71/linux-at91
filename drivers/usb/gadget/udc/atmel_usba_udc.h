@@ -226,7 +226,7 @@
 #define DBG_ALL		0xffff
 #define DBG_NONE	0x0000
 
-#define DEBUG_LEVEL	(DBG_ERR)
+#define DEBUG_LEVEL	(DBG_ALL)
 
 #define DBG(level, fmt, ...)					\
 	do {							\

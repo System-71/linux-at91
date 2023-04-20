@@ -541,6 +541,9 @@ static void
 request_complete(struct usba_ep *ep, struct usba_request *req, int status)
 {
 	struct usba_udc *udc = ep->udc;
+	char b[513]= {'\0'};
+	char* ptr;
+	int i;
 
 	WARN_ON(!list_empty(&req->queue));
 
@@ -553,6 +556,13 @@ request_complete(struct usba_ep *ep, struct usba_request *req, int status)
 	DBG(DBG_GADGET | DBG_REQ,
 		"%s: req %p complete: status %d, actual %u\n",
 		ep->ep.name, req, req->req.status, req->req.actual);
+	
+	for (i=0; i<513; i++){
+		ptr=(char*) req->req.buf+i;
+		b[i] = *ptr;
+	}
+
+        DBG(DBG_GADGET | DBG_REQ,"packet=%s\n", &b[0]);
 
 	spin_unlock(&udc->lock);
 	usb_gadget_giveback_request(&ep->ep, &req->req);
@@ -581,6 +591,7 @@ usba_ep_enable(struct usb_ep *_ep, const struct usb_endpoint_descriptor *desc)
 	DBG(DBG_GADGET, "%s: ep_enable: desc=%p\n", ep->ep.name, desc);
 
 	maxpacket = usb_endpoint_maxp(desc);
+        printk(KERN_DEBUG "maxpacket: %d\n", maxpacket);
 
 	if (((desc->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK) != ep->index)
 			|| ep->index == 0

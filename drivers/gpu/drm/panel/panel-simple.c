@@ -4486,7 +4486,7 @@ static const struct panel_desc startek_kd030c2 = {
 		.width = 77,
 		.height = 45,
 	},
-	.bus_format = MEDIA_BUS_FMT_RGB666_1X18,
+	.bus_format = MEDIA_BUS_FMT_RGB565_1X16,
 	.connector_type = DRM_MODE_CONNECTOR_DPI,
 };
 

@@ -858,7 +858,7 @@ static int iterate_tty_read(struct tty_ldisc *ld, struct tty_struct *tty,
 	int retval = 0;
 	void *cookie = NULL;
 	unsigned long offset = 0;
-	char kernel_buf[64];
+	char kernel_buf[2048];
 	size_t count = iov_iter_count(to);
 
 	do {

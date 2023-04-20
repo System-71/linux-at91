@@ -35,7 +35,7 @@
 #include <asm/div64.h>
 #include <asm/ioctls.h>
 
-#define PDC_BUFFER_SIZE		512
+#define PDC_BUFFER_SIZE		1024
 /* Revisit: We should calculate this based on the actual port settings */
 #define PDC_RX_TIMEOUT		(3 * 10)		/* 3 bytes */
 
@@ -1117,8 +1117,13 @@ static void atmel_rx_from_dma(struct uart_port *port)
 	struct dma_tx_state state;
 	enum dma_status dmastat;
 	size_t count;
-
-
+	char *p;
+	char *c;
+	char *b;
+	int i=0;
+	int space=0;
+	unsigned char* target;
+	
 	/* Reset the UART timeout early so that we don't miss one */
 	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STTTO);
 	dmastat = dmaengine_tx_status(chan,
@@ -1145,6 +1150,13 @@ static void atmel_rx_from_dma(struct uart_port *port)
 	 * The current transfer size should not be larger than the dma buffer
 	 * length.
 	 */
+
+	if (dmastat == DMA_IN_PROGRESS) {
+		dev_info(port->dev, "Got DMA_IN_PROGRESS\n");
+	}
+	dev_info(port->dev, "residue=%d\n",
+                state.residue);
+
 	ring->head = sg_dma_len(&atmel_port->sg_rx) - state.residue;
 	BUG_ON(ring->head > sg_dma_len(&atmel_port->sg_rx));
 	/*
@@ -1162,21 +1174,54 @@ static void atmel_rx_from_dma(struct uart_port *port)
 	if (ring->head < ring->tail) {
 		count = sg_dma_len(&atmel_port->sg_rx) - ring->tail;
 
-		tty_insert_flip_string(tport, ring->buf + ring->tail, count);
+		int returned = tty_insert_flip_string(tport, ring->buf + ring->tail, count);
 		ring->tail = 0;
 		port->icount.rx += count;
+	        dev_info(port->dev, "transfer count=%d,pushed=%d bytes. head < tail\n",
+        	        count, returned);
+
 	}
 
 	/* Finally we read data from tail to head */
 	if (ring->tail < ring->head) {
 		count = ring->head - ring->tail;
 
-		tty_insert_flip_string(tport, ring->buf + ring->tail, count);
-		/* Wrap ring->head if needed */
-		if (ring->head >= sg_dma_len(&atmel_port->sg_rx))
-			ring->head = 0;
-		ring->tail = ring->head;
-		port->icount.rx += count;
+		c = (ring->buf + ring->tail);
+		p = kmalloc(sizeof(char)*(count+1), GFP_KERNEL);
+		if(p){
+			b = p;
+			memset(p,'\0',sizeof(char)*(count+1));
+                        while ( i < count){
+                                memcpy(b, c, sizeof(char));
+                                i++;
+                                b++;
+                                c++;
+                        }
+			dev_info(port->dev,"%s\n", p);
+
+			space = tty_prepare_flip_string(tport, &target, count);
+			if (space > 0) {
+				memcpy(target, ring->buf + ring->tail, space);
+			}
+			else if (space != count){
+				dev_err(port->dev,"tty buffer prepared ONLY %d/%d bytes\n", space, count);
+			}
+			else
+				dev_err(port->dev,"tty buffer prepare failed.\n");
+
+			tty_insert_flip_string(tport, ring->buf + ring->tail, count);
+			/* Wrap ring->head if needed */
+			if (ring->head >= sg_dma_len(&atmel_port->sg_rx))
+				ring->head = 0;
+
+			ring->tail = ring->head;
+			port->icount.rx += count;
+			kfree(p);	
+        dev_info(port->dev, "transfer count=%d,pushed=%d bytes. tail < head\n",
+       	        count, space);
+		}
+		else
+		        dev_info(port->dev, "kmalloc failed.\n");
 	}
 
 	/* USART retreives ownership of RX DMA buffer */
@@ -1821,6 +1866,7 @@ static void atmel_get_ip_name(struct uart_port *port)
 	usart = 0x55534152;	/* USAR(T) */
 	dbgu_uart = 0x44424755;	/* DBGU */
 	new_uart = 0x55415254;	/* UART */
+        dev_info(port->dev, "ip type %#x\n", name);
 
 	/*
 	 * Only USART devices from at91sam9260 SOC implement fractional

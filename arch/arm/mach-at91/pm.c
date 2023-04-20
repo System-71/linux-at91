@@ -1511,6 +1511,8 @@ void __init sam9x60_pm_init(void)
 
 	soc_pm.ws_ids = sam9x60_ws_ids;
 	soc_pm.config_pmc_ws = at91_sam9x60_config_pmc_ws;
+	soc_pm.config_shdwc_ws = at91_sama5d2_config_shdwc_ws;
+
 }
 
 void __init at91sam9_pm_init(void)
