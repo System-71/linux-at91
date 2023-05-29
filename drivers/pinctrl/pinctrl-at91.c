@@ -410,6 +410,7 @@ static bool at91_mux_get_output(void __iomem *pio, unsigned int pin, bool *val)
 static void at91_mux_set_output(void __iomem *pio, unsigned int mask,
 				bool is_on, bool val)
 {
+
 	writel_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
 	writel_relaxed(mask, pio + (is_on ? PIO_OER : PIO_ODR));
 }
@@ -1467,6 +1468,7 @@ static void at91_gpio_set_multiple(struct gpio_chip *chip,
 	uint32_t set_mask = (*mask & *bits) & BITS_MASK(chip->ngpio);
 	uint32_t clear_mask = (*mask & ~(*bits)) & BITS_MASK(chip->ngpio);
 
+
 	writel_relaxed(set_mask, pio + PIO_SODR);
 	writel_relaxed(clear_mask, pio + PIO_CODR);
 }
@@ -1477,6 +1479,7 @@ static int at91_gpio_direction_output(struct gpio_chip *chip, unsigned offset,
 	struct at91_gpio_chip *at91_gpio = gpiochip_get_data(chip);
 	void __iomem *pio = at91_gpio->regbase;
 	unsigned mask = 1 << offset;
+
 
 	writel_relaxed(mask, pio + (val ? PIO_SODR : PIO_CODR));
 	writel_relaxed(mask, pio + PIO_OER);

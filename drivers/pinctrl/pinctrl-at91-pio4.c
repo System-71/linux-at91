@@ -396,6 +396,7 @@ static void atmel_gpio_set(struct gpio_chip *chip, unsigned int offset, int val)
 	struct atmel_pioctrl *atmel_pioctrl = gpiochip_get_data(chip);
 	struct atmel_pin *pin = atmel_pioctrl->pins[offset];
 
+        printk("pinctrl-4: pio+reg = %x + %x = %x\n", (unsigned int) atmel_pioctrl->reg_base, (val ? PIO_SODR : PIO_CODR), mask);
 	atmel_gpio_write(atmel_pioctrl, pin->bank,
 			 val ? ATMEL_PIO_SODR : ATMEL_PIO_CODR,
 			 BIT(pin->line));
