@@ -96,6 +96,8 @@ static int sam9x60_frac_pll_set(struct sam9x60_pll_core *core)
 	cmul = (val & core->layout->mul_mask) >> core->layout->mul_shift;
 	cfrac = (val & core->layout->frac_mask) >> core->layout->frac_shift;
 
+	pr_info("[sam9x60_frac_pll_set] cmul=%d, cfrac=%d\n", cmul, cfrac);
+
 	if (sam9x60_frac_pll_ready(regmap, core->id) &&
 	    (cmul == frac->mul && cfrac == frac->frac))
 		goto unlock;
@@ -193,6 +195,8 @@ static long sam9x60_frac_pll_compute_mul_frac(struct sam9x60_pll_core *core,
 	unsigned long tmprate, remainder;
 	unsigned long nmul = 0;
 	unsigned long nfrac = 0;
+	
+        pr_info("%s: here\n",__func__ );
 
 	if (rate < FCORE_MIN || rate > FCORE_MAX)
 		return -ERANGE;
@@ -216,6 +220,7 @@ static long sam9x60_frac_pll_compute_mul_frac(struct sam9x60_pll_core *core,
 	/* Check if resulted rate is a valid.  */
 	if (tmprate < FCORE_MIN || tmprate > FCORE_MAX)
 		return -ERANGE;
+        pr_info("rate=%ld, tmprate=%ld\n", rate, tmprate);
 
 	if (update) {
 		frac->mul = nmul - 1;
@@ -262,6 +267,8 @@ static int sam9x60_frac_pll_set_rate_chg(struct clk_hw *hw, unsigned long rate,
 	regmap_read(regmap, AT91_PMC_PLL_CTRL1, &val);
 	cmul = (val & core->layout->mul_mask) >> core->layout->mul_shift;
 	cfrac = (val & core->layout->frac_mask) >> core->layout->frac_shift;
+
+        pr_info("[sam9x60_frac_pll_set_rate_chg] cmul=%d, cfrac=%d\n", cmul, cfrac);
 
 	if (cmul == frac->mul && cfrac == frac->frac)
 		goto unlock;
@@ -444,6 +451,8 @@ static long sam9x60_div_pll_compute_div(struct sam9x60_pll_core *core,
 	long best_diff = -1, best_rate = -EINVAL;
 	u32 divid;
 
+	pr_info("%s: rate=%ld\n", __func__, (long) rate);
+
 	if (!rate)
 		return 0;
 
@@ -468,6 +477,8 @@ static long sam9x60_div_pll_compute_div(struct sam9x60_pll_core *core,
 		if (!best_diff)
 			break;
 	}
+
+	pr_info("%s: best_rate=%ld\n", __func__, (long) best_rate);
 
 	if (best_rate < characteristics->output[0].min ||
 	    best_rate > characteristics->output[0].max)

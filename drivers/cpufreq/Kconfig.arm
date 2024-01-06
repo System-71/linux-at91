@@ -283,6 +283,13 @@ config ARM_SA1100_CPUFREQ
 config ARM_SA1110_CPUFREQ
 	bool
 
+config ARM_SAM9X60_CPUFREQ
+        tristate "Sam9x60 CPU Frequency scaling support"
+        depends on ARCH_AT91 && REGULATOR
+        select PM_OPP
+        help
+          This adds the CPUFreq driver support for SAM9X60 SoC.
+
 config ARM_SCMI_CPUFREQ
 	tristate "SCMI based CPUfreq driver"
 	depends on ARM_SCMI_PROTOCOL || COMPILE_TEST

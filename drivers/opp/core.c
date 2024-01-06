@@ -1010,11 +1010,13 @@ static int _set_opp(struct device *dev, struct opp_table *opp_table,
 	/* Return early if nothing to do */
 	if (old_opp == opp && opp_table->current_rate == freq &&
 	    opp_table->enabled) {
-		dev_dbg(dev, "%s: OPPs are same, nothing to do\n", __func__);
+		dev_info(dev, "%s: OPPs are same, nothing to do, %ld==%ld\n", __func__, (long) freq, (long)opp_table->current_rate);
 		return 0;
 	}
 
-	dev_dbg(dev, "%s: switching OPP: Freq %lu -> %lu Hz, Level %u -> %u, Bw %u -> %u\n",
+	pr_info("%s: opp_table->current_rate= %ld, freq=%ld\n", __func__, (long) opp_table->current_rate, (long) freq);
+
+	dev_info(dev, "%s: switching OPP: Freq %lu -> %lu Hz, Level %u -> %u, Bw %u -> %u\n",
 		__func__, opp_table->current_rate, freq, old_opp->level,
 		opp->level, old_opp->bandwidth ? old_opp->bandwidth[0].peak : 0,
 		opp->bandwidth ? opp->bandwidth[0].peak : 0);
@@ -1115,6 +1117,7 @@ int dev_pm_opp_set_rate(struct device *dev, unsigned long target_freq)
 		}
 
 		freq = clk_round_rate(opp_table->clk, target_freq);
+		//pr_info("%s: clock: %s, freq=%ld\n", __func__, opp_table->clk->core.name, (long) freq);
 		if ((long)freq <= 0)
 			freq = target_freq;
 
@@ -1132,12 +1135,13 @@ int dev_pm_opp_set_rate(struct device *dev, unsigned long target_freq)
 			goto put_opp_table;
 		}
 	}
-
+	pr_info("%s: set_opp\n", __func__);
 	ret = _set_opp(dev, opp_table, opp, freq);
 
 	if (target_freq)
 		dev_pm_opp_put(opp);
 put_opp_table:
+	pr_info("%s: put_opp_table\n", __func__);
 	dev_pm_opp_put_opp_table(opp_table);
 	return ret;
 }

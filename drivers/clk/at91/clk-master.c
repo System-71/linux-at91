@@ -98,9 +98,9 @@ static unsigned long clk_master_div_recalc_rate(struct clk_hw *hw,
 	rate /= characteristics->divisors[div];
 
 	if (rate < characteristics->output.min)
-		pr_warn("master clk div is underclocked");
+		pr_warn("%s: master clk div is underclocked", __func__);
 	else if (rate > characteristics->output.max)
-		pr_warn("master clk div is overclocked");
+		pr_warn("%s: master clk div is overclocked", __func__);
 
 	return rate;
 }
@@ -164,6 +164,8 @@ static int clk_master_div_set_rate(struct clk_hw *hw, unsigned long rate,
 	int div, i;
 	int ret;
 
+	pr_warn("writing");
+
 	div = DIV_ROUND_CLOSEST(parent_rate, rate);
 	if (div > ARRAY_SIZE(characteristics->divisors))
 		return -EINVAL;
@@ -193,6 +195,7 @@ static int clk_master_div_set_rate(struct clk_hw *hw, unsigned long rate,
 
 	mckr &= ~(MASTER_DIV_MASK << MASTER_DIV_SHIFT);
 	mckr |= (div << MASTER_DIV_SHIFT);
+	pr_warn("writing 0x%x", (unsigned int) mckr);
 	ret = regmap_write(master->regmap, master->layout->offset, mckr);
 	if (ret)
 		goto unlock;
@@ -753,6 +756,8 @@ static int clk_sama7g5_master_set_rate(struct clk_hw *hw, unsigned long rate,
 {
 	struct clk_master *master = to_clk_master(hw);
 	unsigned long div, flags;
+
+	pr_info("%s\n",__func__);
 
 	div = DIV_ROUND_CLOSEST(parent_rate, rate);
 	if ((div > (1 << (MASTER_PRES_MAX - 1))) || (div & (div - 1)))

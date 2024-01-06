@@ -59,6 +59,8 @@ static int set_target(struct cpufreq_policy *policy, unsigned int index)
 	struct private_data *priv = policy->driver_data;
 	unsigned long freq = policy->freq_table[index].frequency;
 
+	pr_info("%s: target is %ld\n", __func__, (long) freq);
+
 	return dev_pm_opp_set_rate(priv->cpu_dev, freq * 1000);
 }
 

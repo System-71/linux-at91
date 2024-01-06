@@ -4495,11 +4495,11 @@ static const struct drm_display_mode startek_kd024c4_mode = {
 	.vdisplay = 320,
 	.vsync_start = 320 + 8,
 	.vsync_end = 320 + 8 + 4,
-	.vtotal = 320 + 8 + 4 + 8,
+	.vtotal = 320 + 8 + 4 + 4,
 	.hdisplay = 240,
-	.hsync_start = 240 + 8,
-	.hsync_end = 240 + 8 + 10,
-	.htotal = 240 + 8 + 10 + 8,
+	.hsync_start = 240 + 38,
+	.hsync_end = 240 + 38 + 10,
+	.htotal = 240 + 38 + 10 + 8,
 	.flags = DRM_BUS_FLAG_DE_HIGH | DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
 };
 

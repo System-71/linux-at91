@@ -39,8 +39,35 @@
 			compatible = "arm,arm926ej-s";
 			device_type = "cpu";
 			reg = <0>;
-		};
-	};
+			clocks = <&pmc PMC_TYPE_CORE PMC_MAIN>, <&pmc PMC_TYPE_CORE PMC_PLLACK>, <&pmc PMC_TYPE_CORE PMC_MCK>;
+			clock-names = "main", "plla", "mck";
+                        operating-points-v2 = <&cpu_opp_table>;
+                };
+        };
+
+        cpu_opp_table: opp-table {
+                compatible = "operating-points-v2";
+
+                opp-600000000 {
+                        opp-hz = /bits/ 64 <600000000>;
+                        opp-microvolt = <1050000 1150000 1200000>;
+                        clock-latency-ns = <320000>;
+                };
+
+                opp-2000000000 {
+                        opp-hz = /bits/ 64 <200000000>;
+                        opp-microvolt = <1050000 1150000 1200000>;
+                        clock-latency-ns = <320000>;
+                };
+
+                opp-3960000000 {
+                        opp-hz = /bits/ 64 <396000000>;
+                        opp-microvolt = <1050000 1150000 1200000>;
+                        clock-latency-ns = <320000>;
+                };
+
+        };
+
 
 	memory@20000000 {
 		device_type = "memory";

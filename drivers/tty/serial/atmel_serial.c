@@ -1031,8 +1031,8 @@ static int atmel_prepare_tx_dma(struct uart_port *port)
 	atmel_port->chan_tx = dma_request_slave_channel(mfd_dev, "tx");
 	if (atmel_port->chan_tx == NULL)
 		goto chan_err;
-	dev_info(port->dev, "using %s for tx DMA transfers\n",
-		dma_chan_name(atmel_port->chan_tx));
+	//dev_info(port->dev, "using %s for tx DMA transfers\n",
+	//	dma_chan_name(atmel_port->chan_tx));
 
 	spin_lock_init(&atmel_port->lock_tx);
 	sg_init_table(&atmel_port->sg_tx, 1);
@@ -1151,11 +1151,11 @@ static void atmel_rx_from_dma(struct uart_port *port)
 	 * length.
 	 */
 
-	if (dmastat == DMA_IN_PROGRESS) {
-		dev_info(port->dev, "Got DMA_IN_PROGRESS\n");
-	}
-	dev_info(port->dev, "residue=%d\n",
-                state.residue);
+	//if (dmastat == DMA_IN_PROGRESS) {
+		//dev_info(port->dev, "Got DMA_IN_PROGRESS\n");
+	//}
+	//dev_info(port->dev, "residue=%d\n",
+        //        state.residue);
 
 	ring->head = sg_dma_len(&atmel_port->sg_rx) - state.residue;
 	BUG_ON(ring->head > sg_dma_len(&atmel_port->sg_rx));
@@ -1177,8 +1177,8 @@ static void atmel_rx_from_dma(struct uart_port *port)
 		int returned = tty_insert_flip_string(tport, ring->buf + ring->tail, count);
 		ring->tail = 0;
 		port->icount.rx += count;
-	        dev_info(port->dev, "transfer count=%d,pushed=%d bytes. head < tail\n",
-        	        count, returned);
+	        //dev_info(port->dev, "transfer count=%d,pushed=%d bytes. head < tail\n",
+        	//        count, returned);
 
 	}
 
@@ -1197,7 +1197,7 @@ static void atmel_rx_from_dma(struct uart_port *port)
                                 b++;
                                 c++;
                         }
-			dev_info(port->dev,"%s\n", p);
+			//dev_info(port->dev,"%s\n", p);
 
 			space = tty_prepare_flip_string(tport, &target, count);
 			if (space > 0) {
@@ -1217,8 +1217,8 @@ static void atmel_rx_from_dma(struct uart_port *port)
 			ring->tail = ring->head;
 			port->icount.rx += count;
 			kfree(p);	
-        dev_info(port->dev, "transfer count=%d,pushed=%d bytes. tail < head\n",
-       	        count, space);
+        //dev_info(port->dev, "transfer count=%d,pushed=%d bytes. tail < head\n",
+       	//        count, space);
 		}
 		else
 		        dev_info(port->dev, "kmalloc failed.\n");
@@ -1253,8 +1253,8 @@ static int atmel_prepare_rx_dma(struct uart_port *port)
 	atmel_port->chan_rx = dma_request_slave_channel(mfd_dev, "rx");
 	if (atmel_port->chan_rx == NULL)
 		goto chan_err;
-	dev_info(port->dev, "using %s for rx DMA transfers\n",
-		dma_chan_name(atmel_port->chan_rx));
+	//dev_info(port->dev, "using %s for rx DMA transfers\n",
+	//	dma_chan_name(atmel_port->chan_rx));
 
 	spin_lock_init(&atmel_port->lock_rx);
 	sg_init_table(&atmel_port->sg_rx, 1);

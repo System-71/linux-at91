@@ -197,7 +197,10 @@ unsigned int cpufreq_generic_get(unsigned int cpu)
 		return 0;
 	}
 
-	return clk_get_rate(policy->clk) / 1000;
+	unsigned long rate =  clk_get_rate(policy->clk) / 1000;
+	pr_info("%s: rate is %ld\n", __func__, (long) rate);
+
+	return rate;
 }
 EXPORT_SYMBOL_GPL(cpufreq_generic_get);
 
@@ -352,7 +355,7 @@ static void cpufreq_notify_transition(struct cpufreq_policy *policy,
 
 	freqs->policy = policy;
 	freqs->flags = cpufreq_driver->flags;
-	pr_debug("notification %u of frequency transition to %u kHz\n",
+	pr_info("notification %u of frequency transition to %u kHz\n",
 		 state, freqs->new);
 
 	switch (state) {
@@ -363,7 +366,7 @@ static void cpufreq_notify_transition(struct cpufreq_policy *policy,
 		 * "old frequency".
 		 */
 		if (policy->cur && policy->cur != freqs->old) {
-			pr_debug("Warning: CPU frequency is %u, cpufreq assumed %u kHz\n",
+			pr_info("Warning: CPU frequency is %u, cpufreq assumed %u kHz\n",
 				 freqs->old, policy->cur);
 			freqs->old = policy->cur;
 		}
@@ -376,7 +379,7 @@ static void cpufreq_notify_transition(struct cpufreq_policy *policy,
 
 	case CPUFREQ_POSTCHANGE:
 		adjust_jiffies(CPUFREQ_POSTCHANGE, freqs);
-		pr_debug("FREQ: %u - CPUs: %*pbl\n", freqs->new,
+		pr_info("FREQ: %u - CPUs: %*pbl\n", freqs->new,
 			 cpumask_pr_args(policy->cpus));
 
 		for_each_cpu(cpu, policy->cpus)
@@ -1067,7 +1070,7 @@ static int cpufreq_init_policy(struct cpufreq_policy *policy)
 		/* Update policy governor to the one used before hotplug. */
 		gov = get_governor(policy->last_governor);
 		if (gov) {
-			pr_debug("Restoring governor %s for cpu %d\n",
+			pr_info("Restoring governor %s for cpu %d\n",
 				 gov->name, policy->cpu);
 		} else {
 			gov = get_governor(default_governor);
@@ -1131,7 +1134,7 @@ static int cpufreq_add_policy_cpu(struct cpufreq_policy *policy, unsigned int cp
 void refresh_frequency_limits(struct cpufreq_policy *policy)
 {
 	if (!policy_is_inactive(policy)) {
-		pr_debug("updating policy for CPU %u\n", policy->cpu);
+		pr_info("updating policy for CPU %u\n", policy->cpu);
 
 		cpufreq_set_policy(policy, policy->governor, policy->policy);
 	}
@@ -1143,7 +1146,7 @@ static void handle_update(struct work_struct *work)
 	struct cpufreq_policy *policy =
 		container_of(work, struct cpufreq_policy, update);
 
-	pr_debug("handle_update for cpu %u called\n", policy->cpu);
+	pr_info("handle_update for cpu %u called\n", policy->cpu);
 	down_write(&policy->rwsem);
 	refresh_frequency_limits(policy);
 	up_write(&policy->rwsem);
@@ -1184,7 +1187,7 @@ static void cpufreq_policy_put_kobj(struct cpufreq_policy *policy)
 	 * actually not referenced anymore by anybody before we
 	 * proceed with unloading.
 	 */
-	pr_debug("waiting for dropping of refcount\n");
+	pr_info("waiting for dropping of refcount\n");
 	wait_for_completion(cmp);
 	pr_debug("wait complete\n");
 }
@@ -1346,7 +1349,7 @@ static int cpufreq_online(unsigned int cpu)
 	if (!new_policy && cpufreq_driver->online) {
 		ret = cpufreq_driver->online(policy);
 		if (ret) {
-			pr_debug("%s: %d: initialization failed\n", __func__,
+			pr_info("%s: %d: initialization failed\n", __func__,
 				 __LINE__);
 			goto out_exit_policy;
 		}
@@ -1362,7 +1365,7 @@ static int cpufreq_online(unsigned int cpu)
 		 */
 		ret = cpufreq_driver->init(policy);
 		if (ret) {
-			pr_debug("%s: %d: initialization failed\n", __func__,
+			pr_info("%s: %d: initialization failed\n", __func__,
 				 __LINE__);
 			goto out_free_policy;
 		}
@@ -1519,7 +1522,7 @@ static int cpufreq_online(unsigned int cpu)
 	if (cpufreq_thermal_control_enabled(cpufreq_driver))
 		policy->cdev = of_cpufreq_cooling_register(policy);
 
-	pr_debug("initialization complete\n");
+	pr_info("initialization complete\n");
 
 	return 0;
 
@@ -2204,7 +2207,7 @@ static int __target_index(struct cpufreq_policy *policy, int index)
 		}
 
 		freqs.new = newfreq;
-		pr_debug("%s: cpu: %d, oldfreq: %u, new freq: %u\n",
+		pr_info("%s: cpu: %d, oldfreq: %u, new freq: %u\n",
 			 __func__, policy->cpu, freqs.old, freqs.new);
 
 		cpufreq_freq_transition_begin(policy, &freqs);
@@ -2246,7 +2249,7 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 
 	target_freq = __resolve_freq(policy, target_freq, relation);
 
-	pr_debug("target for CPU %u: %u kHz, relation %u, requested %u kHz\n",
+	pr_info("target for CPU %u: %u kHz, relation %u, requested %u kHz\n",
 		 policy->cpu, target_freq, relation, old_target_freq);
 
 	/*
@@ -2321,7 +2324,7 @@ static int cpufreq_init_governor(struct cpufreq_policy *policy)
 	if (!try_module_get(policy->governor->owner))
 		return -EINVAL;
 
-	pr_debug("%s: for CPU %u\n", __func__, policy->cpu);
+	pr_info("%s: for CPU %u\n", __func__, policy->cpu);
 
 	if (policy->governor->init) {
 		ret = policy->governor->init(policy);
@@ -2359,7 +2362,7 @@ int cpufreq_start_governor(struct cpufreq_policy *policy)
 	if (!policy->governor)
 		return -EINVAL;
 
-	pr_debug("%s: for CPU %u\n", __func__, policy->cpu);
+	pr_info("%s: for CPU %u\n", __func__, policy->cpu);
 
 	if (cpufreq_driver->get)
 		cpufreq_verify_current_freq(policy, false);
@@ -2381,7 +2384,7 @@ void cpufreq_stop_governor(struct cpufreq_policy *policy)
 	if (cpufreq_suspended || !policy->governor)
 		return;
 
-	pr_debug("%s: for CPU %u\n", __func__, policy->cpu);
+	pr_info("%s: for CPU %u\n", __func__, policy->cpu);
 
 	if (policy->governor->stop)
 		policy->governor->stop(policy);
@@ -2392,7 +2395,7 @@ static void cpufreq_governor_limits(struct cpufreq_policy *policy)
 	if (cpufreq_suspended || !policy->governor)
 		return;
 
-	pr_debug("%s: for CPU %u\n", __func__, policy->cpu);
+	pr_info("%s: for CPU %u\n", __func__, policy->cpu);
 
 	if (policy->governor->limits)
 		policy->governor->limits(policy);
@@ -2511,7 +2514,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	new_data.min = freq_qos_read_value(&policy->constraints, FREQ_QOS_MIN);
 	new_data.max = freq_qos_read_value(&policy->constraints, FREQ_QOS_MAX);
 
-	pr_debug("setting new policy for CPU %u: %u - %u kHz\n",
+	pr_info("setting new policy for CPU %u: %u - %u kHz\n",
 		 new_data.cpu, new_data.min, new_data.max);
 
 	/*
@@ -2535,22 +2538,22 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 
 	policy->cached_target_freq = UINT_MAX;
 
-	pr_debug("new min and max freqs are %u - %u kHz\n",
+	pr_info("new min and max freqs are %u - %u kHz\n",
 		 policy->min, policy->max);
 
 	if (cpufreq_driver->setpolicy) {
 		policy->policy = new_pol;
-		pr_debug("setting range\n");
+		pr_info("setting range\n");
 		return cpufreq_driver->setpolicy(policy);
 	}
 
 	if (new_gov == policy->governor) {
-		pr_debug("governor limits update\n");
+		pr_info("governor limits update\n");
 		cpufreq_governor_limits(policy);
 		return 0;
 	}
 
-	pr_debug("governor switch\n");
+	pr_info("governor switch\n");
 
 	/* save old, working values */
 	old_gov = policy->governor;
@@ -2566,7 +2569,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	if (!ret) {
 		ret = cpufreq_start_governor(policy);
 		if (!ret) {
-			pr_debug("governor change\n");
+			pr_info("governor change\n");
 			sched_cpufreq_governor_change(policy, old_gov);
 			return 0;
 		}
@@ -2574,7 +2577,7 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	}
 
 	/* new governor failed, so re-start old one */
-	pr_debug("starting governor %s failed\n", policy->governor->name);
+	pr_info("starting governor %s failed\n", policy->governor->name);
 	if (old_gov) {
 		policy->governor = old_gov;
 		if (cpufreq_init_governor(policy))
@@ -2789,7 +2792,7 @@ int cpufreq_register_driver(struct cpufreq_driver *driver_data)
 	     (!driver_data->online != !driver_data->offline))
 		return -EINVAL;
 
-	pr_debug("trying to register driver %s\n", driver_data->name);
+	pr_info("trying to register driver %s\n", driver_data->name);
 
 	/* Protect against concurrent CPU online/offline. */
 	cpus_read_lock();
@@ -2809,7 +2812,7 @@ int cpufreq_register_driver(struct cpufreq_driver *driver_data)
 	 */
 	if (!cpufreq_driver->setpolicy) {
 		static_branch_enable_cpuslocked(&cpufreq_freq_invariance);
-		pr_debug("supports frequency invariance");
+		pr_info("supports frequency invariance");
 	}
 
 	if (driver_data->setpolicy)

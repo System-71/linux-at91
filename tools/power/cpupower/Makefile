@@ -39,7 +39,7 @@ CPUFREQ_BENCH ?= true
 # Do not build libraries, but build the code in statically
 # Libraries are still built, otherwise the Makefile code would
 # be rather ugly.
-export STATIC ?= false
+export STATIC ?= true
 
 # Prefix to the directories we're installing to
 DESTDIR ?=
@@ -124,9 +124,8 @@ WARNINGS += -Wshadow
 override CFLAGS += -DVERSION=\"$(VERSION)\" -DPACKAGE=\"$(PACKAGE)\" \
 		-DPACKAGE_BUGREPORT=\"$(PACKAGE_BUGREPORT)\" -D_GNU_SOURCE
 
-UTIL_OBJS =  utils/helpers/amd.o utils/helpers/msr.o \
-	utils/helpers/sysfs.o utils/helpers/misc.o utils/helpers/cpuid.o \
-	utils/helpers/pci.o utils/helpers/bitmask.o \
+UTIL_OBJS =  utils/helpers/sysfs.o utils/helpers/misc.o utils/helpers/cpuid.o \
+	utils/helpers/bitmask.o \
 	utils/idle_monitor/nhm_idle.o utils/idle_monitor/snb_idle.o \
 	utils/idle_monitor/hsw_ext_idle.o \
 	utils/idle_monitor/amd_fam14h_idle.o utils/idle_monitor/cpuidle_sysfs.o \
@@ -216,9 +215,9 @@ $(OUTPUT)%.o: %.c
 $(OUTPUT)cpupower: $(UTIL_OBJS) $(OUTPUT)libcpupower.so.$(LIB_MAJ)
 	$(ECHO) "  CC      " $@
 ifeq ($(strip $(STATIC)),true)
-	$(QUIET) $(CC) $(CFLAGS) $(LDFLAGS) $(UTIL_OBJS) -lrt -lpci -L$(OUTPUT) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(UTIL_OBJS) -static -lrt -L$(OUTPUT) -o $@
 else
-	$(QUIET) $(CC) $(CFLAGS) $(LDFLAGS) $(UTIL_OBJS) -lcpupower -lrt -lpci -L$(OUTPUT) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(UTIL_OBJS) -static -lcpupower -lrt -L$(OUTPUT) -o $@
 endif
 	$(QUIET) $(STRIPCMD) $@
 

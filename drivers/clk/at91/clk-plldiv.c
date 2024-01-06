@@ -38,8 +38,10 @@ static long clk_plldiv_round_rate(struct clk_hw *hw, unsigned long rate,
 {
 	unsigned long div;
 
-	if (rate > *parent_rate)
+	if (rate > *parent_rate) {
+		pr_info("%s: praent_rate=%ld\n", __func__, (long) *parent_rate);
 		return *parent_rate;
+	}
 	div = *parent_rate / 2;
 	if (rate < div)
 		return div;
