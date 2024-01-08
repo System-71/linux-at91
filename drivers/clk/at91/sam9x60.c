@@ -162,7 +162,7 @@ static const struct {
 	{ .n = "pit64b_gclk", .id = 37, },
 	{ .n = "classd_gclk", .id = 42, .r = { .min = 0, .max = 100000000 }, },
 	{ .n = "tcb1_gclk",   .id = 45, },
-	{ .n = "dbgu_gclk",   .id = 47, },
+	{ .n = "dbgu_gclk",   .id = 47, .r = { .min = 20000000, .max = 25000000 }, },
 };
 
 static void __init sam9x60_pmc_setup(struct device_node *np)

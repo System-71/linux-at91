@@ -31,6 +31,7 @@
 #include <linux/suspend.h>
 #include <linux/mm.h>
 #include <linux/io.h>
+#include <linux/clk-provider.h>
 
 #include <asm/div64.h>
 #include <asm/ioctls.h>
@@ -109,6 +110,7 @@ struct atmel_uart_char {
 struct atmel_uart_port {
 	struct uart_port	uart;		/* uart */
 	struct clk		*clk;		/* uart clock */
+	bool			using_gck;	/* flag that peripheral is using GCK as source */
 	int			may_wakeup;	/* cached value of device_may_wakeup for times we need to disable it */
 	u32			backup_imr;	/* IMR saved during suspend */
 	int			break_active;	/* break being received */
@@ -1175,11 +1177,9 @@ static void atmel_rx_from_dma(struct uart_port *port)
 	if (ring->head < ring->tail) {
 		count = sg_dma_len(&atmel_port->sg_rx) - ring->tail;
 
-		int returned = tty_insert_flip_string(tport, ring->buf + ring->tail, count);
+		tty_insert_flip_string(tport, ring->buf + ring->tail, count);
 		ring->tail = 0;
 		port->icount.rx += count;
-	        //dev_info(port->dev, "transfer count=%d,pushed=%d bytes. head < tail\n",
-        	//        count, returned);
 
 	}
 
@@ -2191,8 +2191,12 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 	if (atmel_port->is_usart)
 		mode &= ~(ATMEL_US_NBSTOP | ATMEL_US_PAR | ATMEL_US_CHRL |
 			  ATMEL_US_USCLKS | ATMEL_US_USMODE);
-	else
-		mode &= ~(ATMEL_UA_BRSRCCK | ATMEL_US_PAR | ATMEL_UA_FILTER);
+	else {
+		mode &= ~(ATMEL_US_PAR | ATMEL_UA_FILTER);
+		if (!atmel_port->using_gck) {
+			mode &= ~(ATMEL_UA_BRSRCCK);
+		}
+	}
 
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
 
@@ -2213,8 +2217,11 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 	}
 
 	/* stop bits */
-	if (termios->c_cflag & CSTOPB)
-		mode |= ATMEL_US_NBSTOP_2;
+	if (termios->c_cflag & CSTOPB) {
+		if (atmel_port->is_usart) {
+			mode |= ATMEL_US_NBSTOP_2;
+		}
+	}
 
 	/* parity */
 	if (termios->c_cflag & PARENB) {
@@ -2352,7 +2359,7 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 	 * the CD and avoid needless division of CD, since UART IP's do not
 	 * support implicit division of the Peripheral Clock.
 	 */
-	if (atmel_port->is_usart && cd > ATMEL_US_CD) {
+	if (atmel_port->is_usart && !atmel_port->using_gck && cd > ATMEL_US_CD) {
 		cd /= 8;
 		mode |= ATMEL_US_USCLKS_MCK_DIV8;
 	} else {
@@ -2365,6 +2372,9 @@ static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
 		atmel_uart_writel(port, ATMEL_US_BRGR, quot);
 
 	/* set the mode, clock divisor, parity, stop bits and data size */
+	if (atmel_port->using_gck) {
+		mode |= ATMEL_US_USCLKS_GCK;
+	}
 	atmel_uart_writel(port, ATMEL_US_MR, mode);
 
 	/*
@@ -2552,6 +2562,8 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 	int ret;
 	struct uart_port *port = &atmel_port->uart;
 	struct platform_device *mpdev = to_platform_device(pdev->dev.parent);
+	struct clk* pck;
+        struct clk* gck;
 
 	atmel_init_property(atmel_port, pdev);
 	atmel_set_ops(port);
@@ -2575,17 +2587,37 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 
 	/* for console, the clock could already be configured */
 	if (!atmel_port->clk) {
-		atmel_port->clk = clk_get(&mpdev->dev, "usart");
-		if (IS_ERR(atmel_port->clk)) {
-			ret = PTR_ERR(atmel_port->clk);
+		pck = clk_get(&mpdev->dev, "pck");
+		if (IS_ERR(pck)) {
+			pr_info("pck error\n");
+			ret = PTR_ERR(pck);
 			atmel_port->clk = NULL;
 			return ret;
 		}
-		ret = clk_prepare_enable(atmel_port->clk);
+		ret = clk_prepare_enable(pck);
 		if (ret) {
-			clk_put(atmel_port->clk);
+			pr_info("pck failed to start\n");
+			clk_put(pck);
 			atmel_port->clk = NULL;
 			return ret;
+		}
+		gck = clk_get(&mpdev->dev, "gck");
+		if (!IS_ERR(gck)) {
+			/* register gclk only if listed for device node in DT */
+			pr_info("got gck\n");
+			ret = clk_prepare_enable(gck);
+			if (ret) {
+				pr_info("gck failed to start\n");
+				clk_put(gck);
+				atmel_port->clk = NULL;
+				return ret;
+			}
+			atmel_port->using_gck = true;
+			atmel_port->clk = gck;
+		}
+		else {
+			atmel_port->using_gck = false;
+			atmel_port->clk = pck;
 		}
 		port->uartclk = clk_get_rate(atmel_port->clk);
 		clk_disable_unprepare(atmel_port->clk);
@@ -2936,11 +2968,11 @@ static int atmel_serial_probe(struct platform_device *pdev)
 
 	atomic_set(&atmel_port->tasklet_shutdown, 0);
 	spin_lock_init(&atmel_port->lock_suspended);
-
+	pr_info("init port\n");
 	ret = atmel_init_port(atmel_port, pdev);
 	if (ret)
 		goto err_clear_bit;
-
+	pr_info("init gpio\n");
 	atmel_port->gpios = mctrl_gpio_init(&atmel_port->uart, 0);
 	if (IS_ERR(atmel_port->gpios)) {
 		ret = PTR_ERR(atmel_port->gpios);
