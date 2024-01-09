@@ -395,8 +395,8 @@
 				#size-cells = <0>;
 				reg = <0xf8008000 0x100>;
 				interrupts = <17 IRQ_TYPE_LEVEL_HIGH 0>;
-				clocks = <&pmc PMC_TYPE_PERIPHERAL 17>, <&clk32k 0>;
-				clock-names = "t0_clk", "slow_clk";
+				clocks = <&pmc PMC_TYPE_PERIPHERAL 17>, <&clk32k 0>, <&pmc PMC_TYPE_GCK 17>;
+				clock-names = "t0_clk", "slow_clk", "gck";
 			};
 
 			tcb1: timer@f800c000 {
@@ -405,8 +405,8 @@
 				#size-cells = <0>;
 				reg = <0xf800c000 0x100>;
 				interrupts = <45 IRQ_TYPE_LEVEL_HIGH 0>;
-				clocks = <&pmc PMC_TYPE_PERIPHERAL 45>, <&clk32k 0>;
-				clock-names = "t0_clk", "slow_clk";
+				clocks = <&pmc PMC_TYPE_PERIPHERAL 45>, <&clk32k 0>, <&pmc PMC_TYPE_GCK 45>;
+				clock-names = "t0_clk", "slow_clk", "gck";
 			};
 
 			flx6: flexcom@f8010000 {

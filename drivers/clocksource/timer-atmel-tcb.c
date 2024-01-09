@@ -48,7 +48,7 @@ static struct
 } tcb_cache[3];
 static u32 bmr_cache;
 
-static const u8 atmel_tcb_divisors[] = { 2, 8, 32, 128 };
+static const u8 atmel_tcb_divisors[] = { 1, 2, 8, 32, 128 };
 
 static u64 tc_get_cycles(struct clocksource *cs)
 {
@@ -156,6 +156,7 @@ static struct tc_clkevt_device *to_tc_clkevt(struct clock_event_device *clkevt)
 }
 
 static u32 timer_clock;
+static u32 timer_use_gclk;
 
 static int tc_shutdown(struct clock_event_device *d)
 {
@@ -269,7 +270,12 @@ static int __init setup_clkevents(struct atmel_tc *tc, int divisor_idx)
 	clkevt.clk = t2_clk;
 
 	if (bits == 32) {
-		timer_clock = divisor_idx;
+		if (timer_use_gclk) {
+			timer_clock = divisor_idx;
+		}
+		else {
+			timer_clock = 0;
+		}
 		clkevt.rate = clk_get_rate(t2_clk) / atmel_tcb_divisors[divisor_idx];
 	} else {
 		ret = clk_prepare_enable(tc->slow_clk);
@@ -375,6 +381,7 @@ static int __init tcb_clksrc_init(struct device_node *node)
 {
 	struct atmel_tc tc;
 	struct clk *t0_clk;
+	struct clk *gck;
 	const struct of_device_id *match;
 	u64 (*tc_sched_clock)(void);
 	u32 rate, divided_rate = 0;
@@ -382,6 +389,8 @@ static int __init tcb_clksrc_init(struct device_node *node)
 	int bits;
 	int i;
 	int ret;
+
+	timer_use_gclk = 0;
 
 	/* Protect against multiple calls */
 	if (tcaddr)
@@ -398,6 +407,18 @@ static int __init tcb_clksrc_init(struct device_node *node)
 	tc.slow_clk = of_clk_get_by_name(node->parent, "slow_clk");
 	if (IS_ERR(tc.slow_clk))
 		return PTR_ERR(tc.slow_clk);
+
+	gck = of_clk_get_by_name(node->parent, "gck");
+	if (!IS_ERR(gck)) {
+		/* enable periph clock, set timer to GCK to be enabled later */
+		ret = clk_prepare_enable(t0_clk);
+		if (ret) {
+			pr_err("can't enable peripheral clk\n");
+			return ret;
+		}
+		timer_use_gclk = 1;
+		t0_clk = gck;
+	}
 
 	tc.clk[0] = t0_clk;
 	tc.clk[1] = of_clk_get_by_name(node->parent, "t1_clk");
@@ -434,7 +455,7 @@ static int __init tcb_clksrc_init(struct device_node *node)
 	rate = (u32) clk_get_rate(t0_clk);
 	i = 0;
 	if (tc.tcb_config->has_gclk)
-		i = 1;
+		i = 2;
 	for (; i < ARRAY_SIZE(atmel_tcb_divisors); i++) {
 		unsigned divisor = atmel_tcb_divisors[i];
 		unsigned tmp;
@@ -445,6 +466,10 @@ static int __init tcb_clksrc_init(struct device_node *node)
 			break;
 		divided_rate = tmp;
 		best_divisor_idx = i;
+	}
+
+	if (timer_use_gclk) {
+		timer_clock = 0;
 	}
 
 	clksrc.name = kbasename(node->parent->full_name);
