@@ -2589,14 +2589,12 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 	if (!atmel_port->clk) {
 		pck = clk_get(&mpdev->dev, "pck");
 		if (IS_ERR(pck)) {
-			pr_info("pck error\n");
 			ret = PTR_ERR(pck);
 			atmel_port->clk = NULL;
 			return ret;
 		}
 		ret = clk_prepare_enable(pck);
 		if (ret) {
-			pr_info("pck failed to start\n");
 			clk_put(pck);
 			atmel_port->clk = NULL;
 			return ret;
@@ -2604,10 +2602,8 @@ static int atmel_init_port(struct atmel_uart_port *atmel_port,
 		gck = clk_get(&mpdev->dev, "gck");
 		if (!IS_ERR(gck)) {
 			/* register gclk only if listed for device node in DT */
-			pr_info("got gck\n");
 			ret = clk_prepare_enable(gck);
 			if (ret) {
-				pr_info("gck failed to start\n");
 				clk_put(gck);
 				atmel_port->clk = NULL;
 				return ret;
@@ -2968,11 +2964,9 @@ static int atmel_serial_probe(struct platform_device *pdev)
 
 	atomic_set(&atmel_port->tasklet_shutdown, 0);
 	spin_lock_init(&atmel_port->lock_suspended);
-	pr_info("init port\n");
 	ret = atmel_init_port(atmel_port, pdev);
 	if (ret)
 		goto err_clear_bit;
-	pr_info("init gpio\n");
 	atmel_port->gpios = mctrl_gpio_init(&atmel_port->uart, 0);
 	if (IS_ERR(atmel_port->gpios)) {
 		ret = PTR_ERR(atmel_port->gpios);

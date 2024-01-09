@@ -1336,11 +1336,6 @@ static int clk_core_determine_round_nolock(struct clk_core *core,
 	 *   over the provider
 	 */
 	if (clk_core_rate_is_protected(core)) {
-		pr_info("%s: %s protected with count=%d\n",__func__, core->name, core->protect_count);
-	        if (req->rate == 396000000) {
-			core->protect_count = 0;
-        		goto test;
-        	}
 		req->rate = core->rate;
 	} else if (core->ops->determine_rate) {
 		return core->ops->determine_rate(core->hw, req);

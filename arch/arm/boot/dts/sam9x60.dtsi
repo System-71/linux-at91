@@ -54,12 +54,6 @@
                         clock-latency-ns = <320000>;
                 };
 
-                opp-2000000000 {
-                        opp-hz = /bits/ 64 <200000000>;
-                        opp-microvolt = <1050000 1150000 1200000>;
-                        clock-latency-ns = <320000>;
-                };
-
                 opp-3960000000 {
                         opp-hz = /bits/ 64 <396000000>;
                         opp-microvolt = <1050000 1150000 1200000>;
@@ -452,7 +446,7 @@
 			flx1: flexcom@f8020000 {
 				compatible = "atmel,sama5d2-flexcom";
 				reg = <0xf8020000 0x200>;
-				clocks = <&pmc PMC_TYPE_PERIPHERAL 6>,<&pmc PMC_TYPE_GCK 6>;
+				clocks = <&pmc PMC_TYPE_PERIPHERAL 6>;
 				#address-cells = <1>;
 				#size-cells = <1>;
 				ranges = <0x0 0xf8020000 0x800>;
