@@ -180,12 +180,19 @@ static int wilc_bus_probe(struct spi_device *spi)
 	wilc->dt_dev = &spi->dev;
 	wilc->dev_irq_num = spi->irq;
 
-	wilc->rtc_clk = devm_clk_get_optional(&spi->dev, "rtc");
+	wilc->rtc_clk = devm_clk_get(&spi->dev, "rtc");
 	if (IS_ERR(wilc->rtc_clk)) {
 		ret = PTR_ERR(wilc->rtc_clk);
 		goto netdev_cleanup;
 	}
 	clk_prepare_enable(wilc->rtc_clk);
+
+	struct clk *sys = devm_clk_get(&spi->dev, "sys");
+	if (IS_ERR(sys)) {
+		ret = PTR_ERR(sys);
+		goto netdev_cleanup;
+	}
+	clk_prepare_enable(sys);
 
 	ret = wilc_of_parse_power_pins(wilc);
 	if (ret)
