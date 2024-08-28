@@ -1221,6 +1221,7 @@ static int atmel_spi_setup(struct spi_device *spi)
 	if (!spi->cs_gpiod)
 		csr |= SPI_BIT(CSAAT);
 	csr |= SPI_BF(DLYBS, 0);
+	csr &= ~SPI_BIT(CSAAT);
 
 	word_delay_csr = atmel_word_delay_csr(spi, as);
 	if (word_delay_csr < 0)
@@ -1242,7 +1243,7 @@ static int atmel_spi_setup(struct spi_device *spi)
 
 	asd->csr = csr;
 
-	dev_dbg(&spi->dev,
+	dev_err(&spi->dev,
 		"setup: bpw %u mode 0x%x -> csr%d %08x\n",
 		bits, spi->mode, spi->chip_select, csr);
 
