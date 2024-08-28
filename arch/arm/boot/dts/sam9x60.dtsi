@@ -88,6 +88,16 @@
 		ranges = <0 0x00300000 0x100000>;
 	};
 
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		display_reserved: framebuffer@2FB00000 {
+			reg = <0x2FB00000 0x300000>;
+		};
+	};
+
 	ahb {
 		compatible = "simple-bus";
 		#address-cells = <1>;
