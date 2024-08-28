@@ -98,16 +98,6 @@
 		status = "okay"; /* Conflict with pwm0. */
 
 		red {
-			label = "red";
-			gpios = <&pioB 11 GPIO_ACTIVE_HIGH>;
-		};
-
-		green {
-			label = "green";
-			gpios = <&pioB 12 GPIO_ACTIVE_HIGH>;
-		};
-
-		blue {
 			label = "blue";
 			gpios = <&pioB 17 GPIO_ACTIVE_LOW>;
 			linux,default-trigger = "heartbeat";
@@ -176,7 +166,7 @@
 
 &flx4 {
 	atmel,flexcom-mode = <ATMEL_FLEXCOM_MODE_SPI>;
-	status = "disabled";
+	status = "okay";
 
 	spi0: spi@400 {
 		compatible = "microchip,sam9x60-spi", "atmel,at91rm9200-spi";
@@ -185,11 +175,11 @@
 		clocks = <&pmc PMC_TYPE_PERIPHERAL 13>;
 		clock-names = "spi_clk";
 		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_flx4_default>;
+		pinctrl-0 = <&pinctrl_flx4_default &pinctrl_spi0_cs_gpio_default &pinctrl_spi0_rtc_gpio_default>;
 		atmel,fifo-size = <16>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-		status = "disabled";
+		status = "okay";
 	};
 };
 
@@ -261,7 +251,7 @@
 	#size-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_macb0_rmii>;
-	status = "okay";
+	status = "disabled";
 
 	ethernet-phy@0 {
 		reg = <0x0>;
@@ -318,10 +308,10 @@
 
 		pinctrl_flx4_default: flx4_spi {
 			atmel,pins =
-				<AT91_PIOA 11 AT91_PERIPH_A AT91_PINCTRL_NONE
-				 AT91_PIOA 12 AT91_PERIPH_A AT91_PINCTRL_NONE
-				 AT91_PIOA 13 AT91_PERIPH_A AT91_PINCTRL_NONE
-				 AT91_PIOA 14 AT91_PERIPH_A AT91_PINCTRL_NONE>;
+				<AT91_PIOA 12 AT91_PERIPH_A (AT91_PINCTRL_PULL_DOWN | AT91_PINCTRL_DRIVE_STRENGTH_HI)
+				 AT91_PIOA 11 AT91_PERIPH_A AT91_PINCTRL_PULL_UP
+				 AT91_PIOA 13 AT91_PERIPH_A AT91_PINCTRL_DRIVE_STRENGTH_HI
+				 AT91_PIOB 3 AT91_PERIPH_B (AT91_PINCTRL_PULL_UP | AT91_PINCTRL_DRIVE_STRENGTH_HI)>;
 		};
 
 		pinctrl_flx5_default: flx_uart {
@@ -423,7 +413,7 @@
 		pinctrl_sdmmc1_default: sdmmc1 {
 			atmel,pins =
 				<AT91_PIOA 13 AT91_PERIPH_B (AT91_PINCTRL_DRIVE_STRENGTH_HI)				/* PA13 CK periph B */
-				 AT91_PIOA 12 AT91_PERIPH_B (AT91_PINCTRL_PULL_UP | AT91_PINCTRL_DRIVE_STRENGTH_HI)	/* PA12 CMD periph B with pullup */
+				 AT91_PIOA 12 AT91_PERIPH_A (AT91_PINCTRL_PULL_UP | AT91_PINCTRL_DRIVE_STRENGTH_HI)	/* PA12 CMD periph A with pullup */
 				 AT91_PIOA 11 AT91_PERIPH_B (AT91_PINCTRL_PULL_UP | AT91_PINCTRL_DRIVE_STRENGTH_HI)	/* PA11 DAT0 periph B with pullup */
 				 AT91_PIOA  2 AT91_PERIPH_B (AT91_PINCTRL_PULL_UP | AT91_PINCTRL_DRIVE_STRENGTH_HI)	/* PA2 DAT1 periph B with pullup */
 				 AT91_PIOA  3 AT91_PERIPH_B (AT91_PINCTRL_PULL_UP | AT91_PINCTRL_DRIVE_STRENGTH_HI)	/* PA3 DAT2 periph B with pullup */
@@ -452,9 +442,7 @@
 
 	leds {
 		pinctrl_gpio_leds: gpio_leds {
-			atmel,pins = <AT91_PIOB 11 AT91_PERIPH_GPIO AT91_PINCTRL_NONE
-				      AT91_PIOB 12 AT91_PERIPH_GPIO AT91_PINCTRL_NONE
-				      AT91_PIOB 17 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
+			atmel,pins = <AT91_PIOB 17 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
 		};
 	};
 
@@ -635,6 +623,72 @@
 	};
 };
 
+&gpu {
+	status = "okay";
+	GFX2D {
+		label = "GFX2D";
+	};
+};
+
+&spi0 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	status = "okay";
+
+	wilc_spi: wilc_spi@3 {
+		compatible = "microchip,wilc1000", "microchip,wilc3000";
+		spi-max-frequency = <8000000>;
+		reg = <3>;
+                clocks = <&pmc PMC_TYPE_PROGRAMMABLE 0>,<&pmc PMC_TYPE_SYSTEM 8>;
+		clock-names = "rtc","sys";
+		interrupt-parent = <&pioB>;
+		interrupts = <11 0>;
+		reset-gpios = <&pioA 22 0>;
+		chip_en-gpios = <&pioB 7 0>;
+		status = "okay";
+	};
+};
+
+&flx2 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_wilc_spi_usart2_default>;
+	atmel,use-dma-rx;
+	atmel,use-dma-tx;
+	status = "okay";
+};
+
+&pinctrl {
+	wilc_spi1_cs {
+		pinctrl_spi0_cs_gpio_default: pinctrl_spi0_cs_gpio {
+			atmel,pins = <AT91_PIOB 3 AT91_PERIPH_B AT91_PINCTRL_NONE>;
+		};
+	};
+
+	wilc_spi1_rtc {
+		pinctrl_spi0_rtc_gpio_default: pinctrl_spi0_rtc_gpio {
+			atmel,pins = <AT91_PIOB 10 AT91_PERIPH_B AT91_PINCTRL_NONE>;
+		};
+	};
+
+	wilc_spi {
+		pinctrl_wilc_spi_reset_gpio_default: pinctrl_wilc_spi_reset_gpio {
+			atmel,pins = <AT91_PIOA 22 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
+		};
+
+		pinctrl_wilc_spi_chip_en_gpio_default: pinctrl_wilc_spi_chip_en_gpio {
+			atmel,pins = <AT91_PIOB 7 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
+		};
+	};
+
+	wilc_spi_usart2 {
+		pinctrl_wilc_spi_usart2_default: pinctrl_wilc_spi_usart2  {
+			atmel,pins = <AT91_PIOA 8 AT91_PERIPH_B AT91_PINCTRL_PULL_UP	/* RXD */
+				      AT91_PIOA 7 AT91_PERIPH_B AT91_PINCTRL_NONE	/* TXD */
+				      AT91_PIOB 0 AT91_PERIPH_B AT91_PINCTRL_NONE	/* RTS */
+				      AT91_PIOB 1 AT91_PERIPH_B AT91_PINCTRL_NONE>;	/* CTS */
+		};
+	};
+};
 
 
 &{/} {
