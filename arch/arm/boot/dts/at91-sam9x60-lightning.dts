@@ -709,6 +709,26 @@
 	};
 };
 
+&{/} {
+	user_io@0 {
+		compatible = "generic-uio";
+		status = "okay";
+		interrupt-parent = <&pioB>;
+		interrupts = <15 IRQ_TYPE_EDGE_RISING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_pps_gpio_default>;
+	};
+};
+
+&pinctrl {
+        pps_gpio {
+                pinctrl_pps_gpio_default: pinctrl_pps_gpio {
+                        atmel,pins = <AT91_PIOB 15 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
+                };
+        };
+};
+
+
 
 &{/} {
 	model = "SAM9X60 Lightning ";
