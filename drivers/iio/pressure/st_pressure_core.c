@@ -527,6 +527,11 @@ static const struct st_sensor_settings st_press_sensors_settings[] = {
 				},
 			},
 		},
+		.lpf = {
+			.addr = 0x10,
+			.en_mask = BIT(3),
+			.cfg_mask = BIT(2),
+		},
 		.bdu = {
 			.addr = 0x10,
 			.mask = BIT(1),

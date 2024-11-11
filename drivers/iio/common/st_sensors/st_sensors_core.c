@@ -399,6 +399,23 @@ int st_sensors_init_sensor(struct iio_dev *indio_dev,
 	if (err < 0)
 		return err;
 
+
+	/* set LPF */
+	if (sdata->sensor_settings->lpf.addr) {
+		dev_info(&indio_dev->dev, "enable low-pass filter\n");
+		err = st_sensors_write_data_with_mask(indio_dev,
+					sdata->sensor_settings->lpf.addr,
+					sdata->sensor_settings->lpf.en_mask, true);
+		if (err < 0)
+			return err;
+
+		err = st_sensors_write_data_with_mask(indio_dev,
+					sdata->sensor_settings->lpf.addr,
+					sdata->sensor_settings->lpf.cfg_mask, true);
+		if (err < 0)
+			return err;
+	}
+
 	/* set BDU */
 	if (sdata->sensor_settings->bdu.addr) {
 		err = st_sensors_write_data_with_mask(indio_dev,

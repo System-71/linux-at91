@@ -123,6 +123,19 @@ struct st_sensor_sim {
 	u8 value;
 };
 
+
+/**
+ * struct st_sensor_lpf - ST sensor device low-pass filter control
+ * @addr: address of the register.
+ * @en_mask: mask to write the LPF enable flag.
+ */
+struct st_sensor_lpf {
+	u8 addr;
+	u8 en_mask;
+	u8 cfg_mask;
+	u8 padding;
+};
+
 /**
  * struct st_sensor_bdu - ST sensor device block data update
  * @addr: address of the register.
@@ -193,6 +206,7 @@ struct st_sensor_data_ready_irq {
  * @pw: Power register of the sensor.
  * @enable_axis: Enable one or more axis of the sensor.
  * @fs: Full scale register and full scale list available.
+ * @lpf: digital low-pass filter enable and bandwidth register
  * @bdu: Block data update register.
  * @das: Data Alignment Selection register.
  * @drdy_irq: Data ready register of the sensor.
@@ -210,6 +224,7 @@ struct st_sensor_settings {
 	struct st_sensor_power pw;
 	struct st_sensor_axis enable_axis;
 	struct st_sensor_fullscale fs;
+	struct st_sensor_lpf lpf;
 	struct st_sensor_bdu bdu;
 	struct st_sensor_das das;
 	struct st_sensor_data_ready_irq drdy_irq;
