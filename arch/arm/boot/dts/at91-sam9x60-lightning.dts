@@ -560,13 +560,13 @@
 			reg = <0x200000 0x600000>;
 		};
 
-		bmp@600000 {
+		bmp@700000 {
 			label = "qspi: boot splash";
-			reg = <0x600000 0x100000>;
-		};
-		scratch@700000 {
-			label = "qspi: user scratch";
 			reg = <0x700000 0x100000>;
+		};
+		scratch@800000 {
+			label = "qspi: user scratch";
+			reg = <0x800000 0x100000>;
 		};
 	};
 };
