@@ -718,6 +718,13 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_pps_gpio_default>;
 	};
+	watchdog-gpio {
+		compatible = "linux,wdt-gpio";
+		gpios = <&pioB 6 GPIO_ACTIVE_HIGH>;
+		hw_algo = "toggle";
+		hw_margin_ms = <1600>;
+		always-running;
+	};
 };
 
 &pinctrl {
