@@ -654,7 +654,7 @@
 
 	wilc_spi: wilc_spi@3 {
 		compatible = "microchip,wilc1000", "microchip,wilc3000";
-		spi-max-frequency = <8000000>;
+		spi-max-frequency = <24000000>;
 		reg = <3>;
                 clocks = <&pmc PMC_TYPE_PROGRAMMABLE 0>,<&pmc PMC_TYPE_SYSTEM 8>;
 		clock-names = "rtc","sys";
